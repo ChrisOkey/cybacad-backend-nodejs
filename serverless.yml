@@ -1,0 +1,13 @@
+service: cybacad-backend
+frameworkVersion: '3'
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1 # Make sure this matches your AWS region
+functions:
+  api:
+    handler: server.handler
+    events:
+      - httpApi:
+          path: /
+          method: get
