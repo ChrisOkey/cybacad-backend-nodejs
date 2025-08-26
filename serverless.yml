@@ -3,11 +3,11 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs18.x
-  region: us-east-1 # Make sure this matches your AWS region
+  region: us-east-1 # CRITICAL: Change to your preferred AWS region
 functions:
   api:
-    handler: server.handler
+    handler: server.api # This is our new router function
     events:
       - httpApi:
-          path: /
-          method: get
+          path: /{proxy+} # This catches all incoming API requests
+          method: '*'
