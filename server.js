@@ -1,32 +1,70 @@
 'use strict';
 
-// The main handler for API Gateway
-// This function acts as a router, directing requests to the correct handler function
+/**
+ * Main Lambda handler for API Gateway.
+ * Routes incoming requests based on path.
+ */
 module.exports.api = async (event) => {
-  // Check the path of the incoming request
-  if (event.path === '/hello') {
-    // If the path is '/hello', call our helloHandler
-    return module.exports.helloHandler(event);
+  const path = event.rawPath || event.path;
+  const method = event.requestContext?.http?.method || event.httpMethod;
+  const cleanPath = path.split('?')[0].replace(/\/+$/, '');
+
+  console.log(`Incoming request: ${method} ${cleanPath}`);
+
+  switch (cleanPath) {
+    case '/hello':
+      return module.exports.helloHandler(event);
+    case '/healthcheck':
+      return module.exports.healthcheckHandler(event);
+    case '/courses':
+      return module.exports.coursesHandler(event);
+    default:
+      return {
+        statusCode: 404,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Not Found' }),
+      };
   }
-  
-  // If the path doesn't match any known endpoints, return a 404 Not Found error
+};
+
+/**
+ * Simple hello endpoint.
+ */
+module.exports.helloHandler = async () => {
   return {
-    statusCode: 404,
-    body: JSON.stringify({ message: "Not Found" }),
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: 'Hello from CybAcad!',
+      timestamp: new Date().toISOString(),
+    }),
   };
 };
 
-// The "hello world" endpoint handler
-// This function returns a simple JSON response
-module.exports.helloHandler = async (event) => {
+/**
+ * Healthcheck endpoint.
+ */
+module.exports.healthcheckHandler = async () => {
   return {
     statusCode: 200,
-    body: JSON.stringify(
-      {
-        message: 'Hello from the CybAcad backend!',
-        timestamp: new Date().toISOString(),
-      },
-      null, 2
-    ),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'ok', service: 'cybacad-backend' }),
   };
 };
+
+/**
+ * Courses endpoint (stub).
+ */
+module.exports.coursesHandler = async () => {
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      courses: [
+        { id: 'web_dev_fundamentals', title: 'Web Development Fundamentals' },
+        { id: 'digital_forensics_intro', title: 'Introduction to Digital Forensics' },
+      ],
+    }),
+  };
+};
+

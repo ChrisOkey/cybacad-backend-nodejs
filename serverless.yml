@@ -1,13 +1,30 @@
 service: cybacad-backend
 frameworkVersion: '3'
+
 provider:
   name: aws
   runtime: nodejs18.x
-  region: us-east-1 # CRITICAL: Change to your preferred AWS region
+  region: eu-west-2
+  timeout: 10
+  stage: dev
+  environment:
+    NODE_ENV: production
+
 functions:
   api:
-    handler: server.api # This is our new router function
+    handler: server.api
     events:
       - httpApi:
-          path: /{proxy+} # This catches all incoming API requests
+          path: /{proxy+}
           method: '*'
+
+plugins:
+  - serverless-offline
+
+package:
+  exclude:
+    - node_modules/**
+    - .git/**
+    - .vscode/**
+    - README.md
+
