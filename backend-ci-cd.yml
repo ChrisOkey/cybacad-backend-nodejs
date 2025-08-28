@@ -12,12 +12,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # This step should now work with the secrets you have provided
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1 # Change to your preferred region
+
+      - name: Debug AWS Credentials
+        run: |
+          aws sts get-caller-identity
+          echo "AWS credentials configured successfully."
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
