@@ -8,17 +8,22 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: us-east-1 # Change to your preferred region
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        # Latest commit SHA for actions/checkout@v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+
+      - name: Configure AWS credentials
+        # Latest commit SHA for aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@0eb446eb2b535d461530e12d1b74737d6e6792ae
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # Change to your preferred region
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        # Latest commit SHA for actions/setup-node@v3
+        uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7
         with:
           node-version: '18'
 
