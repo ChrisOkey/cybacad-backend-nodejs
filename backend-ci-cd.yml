@@ -1,3 +1,4 @@
+
 name: Backend CI/CD Pipeline
 
 on:
@@ -17,7 +18,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: us-east-1 # Change to your preferred region
 
       - name: Setup Node.js
         uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7
@@ -31,5 +32,4 @@ jobs:
         run: npm install -g serverless
 
       - name: Deploy to AWS Lambda
-        run: serverless deploy --stage dev --region us-east-1 --verbose
-
+        run: serverless deploy
