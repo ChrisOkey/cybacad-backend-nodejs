@@ -10,19 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        # Latest commit SHA for actions/checkout@v3
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: Configure AWS credentials
-        # Latest commit SHA for aws-actions/configure-aws-credentials@v4
         uses: aws-actions/configure-aws-credentials@0eb446eb2b535d461530e12d1b74737d6e6792ae
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1 # Change to your preferred region
+          aws-region: us-east-1
 
       - name: Setup Node.js
-        # Latest commit SHA for actions/setup-node@v3
         uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7
         with:
           node-version: '18'
@@ -34,4 +31,5 @@ jobs:
         run: npm install -g serverless
 
       - name: Deploy to AWS Lambda
-        run: serverless deploy
+        run: serverless deploy --stage dev --region us-east-1 --verbose
+
