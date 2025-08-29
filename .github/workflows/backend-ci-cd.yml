@@ -1,9 +1,10 @@
-name: Backend CI/CD Pipeline (OIDC)
+name: Backend CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
+
 permissions:
   id-token: write
   contents: read
@@ -11,29 +12,31 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@a5ac8f395b77cfc23a9d9494e80f970e7a41031c
+        uses: actions/checkout@v3
 
-      - name: Configure AWS credentials with OIDC
-        uses: aws-actions/configure-aws-credentials@e0dd979d363a033c4f74d08b3986915002b545d1
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1 # Change to your preferred region
+          aws-region: us-east-1
 
-      - name: Verify Credentials
+      - name: Verify AWS identity
         run: aws sts get-caller-identity
 
       - name: Setup Node.js
-        uses: actions/setup-node@963f25d30e3606f2e82b79e8c757c91c8901c9a6
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Install Serverless Framework
-        run: npm install -g serverless
+      - name: Install Serverless Framework locally
+        run: npm install --save-dev serverless@4.18.2
 
       - name: Deploy to AWS Lambda
-        run: serverless deploy
+        run: npx serverless deploy --stage dev --region us-east-1 --verbose
+
