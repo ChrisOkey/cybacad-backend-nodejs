@@ -1,4 +1,4 @@
-name: Backend CI/CD Pipeline (OIDC)
+name: Backend CI/CD Pipeline (SAM)
 
 on:
   push:
@@ -19,21 +19,21 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1 # Change to your preferred region
-
-      - name: Verify Credentials
-        run: aws sts get-caller-identity
+          aws-region: us-east-1
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install SAM CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install aws-sam-cli
 
-      - name: Install Serverless Framework
-        run: npm install -g serverless
+      - name: SAM Build
+        run: sam build --use-container
 
-      - name: Deploy to AWS Lambda
-        run: serverless deploy --stage dev --region us-east-1 --verbose
+      - name: SAM Deploy
+        run: sam deploy --stack-name cybacad-backend --no-confirm-changeset --region us-east-1
