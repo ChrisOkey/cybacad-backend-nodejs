@@ -15,11 +15,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials with OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1 # Change to your preferred region
+      # Install the AWS CLI manually
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      # Manually assume the OIDC role and export credentials
+      - name: Assume OIDC Role and Set Credentials
+        id: assume-role
+        run: |
+          # Get the OIDC token from GitHub
+          OIDC_TOKEN=$(curl -s -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}" | jq -r .value)
+
+          # Assume the role using the token
+          ASSUMED_ROLE=$(aws sts assume-role-with-web-identity \
+              --role-arn ${{ secrets.AWS_ROLE_ARN }} \
+              --role-session-name "GitHubActionsSession" \
+              --web-identity-token $OIDC_TOKEN \
+              --duration-seconds 3600 \
+              --output json)
+
+          # Export the temporary credentials as environment variables
+          echo "AWS_ACCESS_KEY_ID=$(echo $ASSUMED_ROLE | jq -r .Credentials.AccessKeyId)" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=$(echo $ASSUMED_ROLE | jq -r .Credentials.SecretAccessKey)" >> $GITHUB_ENV
+          echo "AWS_SESSION_TOKEN=$(echo $ASSUMED_ROLE | jq -r .Credentials.SessionToken)" >> $GITHUB_ENV
+          echo "AWS_REGION=us-east-1" >> $GITHUB_ENV
 
       - name: Verify Credentials
         run: aws sts get-caller-identity
