@@ -1,70 +1,45 @@
 'use strict';
 
 /**
- * Main Lambda handler for API Gateway.
- * Routes incoming requests based on path.
+ * The main handler for API Gateway.
+ * This function acts as a router, directing incoming requests
+ * to the correct handler function based on the request path.
+ *
+ * @param {object} event - The incoming API Gateway event object.
+ * @returns {object} The response object with statusCode, headers, and body.
  */
 module.exports.api = async (event) => {
-  const path = event.rawPath || event.path;
-  const method = event.requestContext?.http?.method || event.httpMethod;
-  const cleanPath = path.split('?')[0].replace(/\/+$/, '');
+  // Use event.rawPath for a consistent path in httpApi integrations.
+  const path = event.rawPath;
 
-  console.log(`Incoming request: ${method} ${cleanPath}`);
-
-  switch (cleanPath) {
-    case '/hello':
-      return module.exports.helloHandler(event);
-    case '/healthcheck':
-      return module.exports.healthcheckHandler(event);
-    case '/courses':
-      return module.exports.coursesHandler(event);
-    default:
-      return {
-        statusCode: 404,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: 'Not Found' }),
-      };
+  // Check the path of the incoming request
+  if (path === '/hello') {
+    return module.exports.helloHandler(event);
   }
-};
-
-/**
- * Simple hello endpoint.
- */
-module.exports.helloHandler = async () => {
+  
+  // If the path doesn't match any known endpoints, return a 404 Not Found error.
   return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      message: 'Hello from CybAcad!',
-      timestamp: new Date().toISOString(),
-    }),
+    statusCode: 404,
+    body: JSON.stringify({ message: "Not Found" }),
   };
 };
 
 /**
- * Healthcheck endpoint.
+ * The "hello world" endpoint handler
+ * This function returns a simple JSON response to confirm the backend is working.
+ *
+ * @param {object} event - The incoming API Gateway event object.
+ * @returns {object} The response object for the client.
  */
-module.exports.healthcheckHandler = async () => {
+module.exports.helloHandler = async (event) => {
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: 'ok', service: 'cybacad-backend' }),
+    body: JSON.stringify(
+      {
+        message: 'Hello from the CybAcad backend!',
+        timestamp: new Date().toISOString(),
+      },
+      null, 2
+    ),
   };
 };
-
-/**
- * Courses endpoint (stub).
- */
-module.exports.coursesHandler = async () => {
-  return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      courses: [
-        { id: 'web_dev_fundamentals', title: 'Web Development Fundamentals' },
-        { id: 'digital_forensics_intro', title: 'Introduction to Digital Forensics' },
-      ],
-    }),
-  };
-};
-
