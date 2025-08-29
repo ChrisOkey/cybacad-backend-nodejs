@@ -36,4 +36,4 @@ jobs:
         run: sam build --use-container
 
       - name: SAM Deploy
-        run: sam deploy --stack-name cybacad-backend --no-confirm-changeset --region us-east-1 --resolve-s3
+        run: sam deploy --stack-name cybacad-backend --no-confirm-changeset --region us-east-1 --resolve-s3 --capabilities CAPABILITY_IAM
