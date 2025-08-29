@@ -39,4 +39,3 @@ jobs:
 
       - name: Deploy to AWS Lambda
         run: npx serverless deploy --stage dev --region us-east-1 --verbose
-
