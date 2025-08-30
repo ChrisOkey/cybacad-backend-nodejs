@@ -1,31 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
 Resources:
-  CybAcadApi:
-    Type: 'AWS::Serverless::Api'
-    Properties:
-      StageName: dev
-      DefinitionBody:
-        openapi: 3.0.1
-        info:
-          title: CybAcadBackendAPI
-          version: '1.0'
-        paths:
-          /{proxy+}:
-            x-amazon-apigateway-any-method:
-              produces:
-                - application/json
-              responses:
-                '200':
-                  description: "200 response"
-                '404':
-                  description: "Not Found"
-              x-amazon-apigateway-integration:
-                type: aws_proxy
-                httpMethod: ANY
-                uri:
-                  Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CybAcadApiFunction.Arn}/invocations"
-                passthroughBehavior: when_no_match
   CybAcadApiFunction:
     Type: 'AWS::Serverless::Function'
     Properties:
