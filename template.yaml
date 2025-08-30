@@ -19,6 +19,5 @@ Resources:
     Type: 'AWS::ApiGateway::Deployment'
     DependsOn: CybAcadApiFunction
     Properties:
-      RestApiId:
-        Ref: CybAcadApi
+      RestApiId: !Ref ServerlessHttpApi
       StageName: dev
