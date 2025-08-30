@@ -9,14 +9,11 @@
  * @returns {object} The response object with statusCode, headers, and body.
  */
 module.exports.api = async (event) => {
-  // CRITICAL: Log the entire event object to CloudWatch
-  console.log('Received event:', JSON.stringify(event, null, 2));
-
   // Use event.rawPath for a consistent path in httpApi integrations.
   const path = event.rawPath;
 
   // Check the path of the incoming request
-  if (path === '/hello') {
+  if (path === '/default/hello') {
     return module.exports.helloHandler(event);
   }
   
