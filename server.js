@@ -1,4 +1,4 @@
-'use strict';
+ 'use strict';
 const fs = require('fs');
 const path = require('path');
 
@@ -18,7 +18,7 @@ const jsonResponse = (statusCode, payload, extraHeaders = {}) => ({
 });
 
 /**
- * Utility: Parse query string into an object (fallback if event.queryStringParameters is absent).
+ * Utility: Parse query string into an object.
  */
 const parseQuery = (event) => {
   if (event.queryStringParameters && typeof event.queryStringParameters === 'object') {
@@ -32,7 +32,6 @@ const parseQuery = (event) => {
     const key = decodeURIComponent(k || '').trim();
     const val = decodeURIComponent(v || '');
     if (!key) return acc;
-    // Support repeated keys as arrays
     if (acc[key] !== undefined) {
       acc[key] = Array.isArray(acc[key]) ? [...acc[key], val] : [acc[key], val];
     } else {
@@ -59,9 +58,8 @@ const parseBody = (event) => {
     if (contentType && contentType.includes('application/json')) {
       return { data: JSON.parse(raw), error: null };
     }
-    // Return raw string for non-JSON content types
     return { data: raw, error: null };
-  } catch (e) {
+  } catch {
     return { data: null, error: 'Invalid JSON body' };
   }
 };
@@ -83,7 +81,6 @@ const compilePath = (pattern) => {
 
 /**
  * Load all route modules dynamically from routes/*.js and compile patterns.
- * Modules export an object with keys like "GET:/hello" or "GET:/labs/{id}".
  */
 const loadRoutes = () => {
   const map = {};
@@ -93,7 +90,6 @@ const loadRoutes = () => {
     const mod = require(path.join(dir, file));
     Object.assign(map, mod);
   }
-  // Compile to an array for matching (supports param routes)
   const compiled = [];
   for (const key of Object.keys(map)) {
     const [method, routePath] = key.split(':');
@@ -113,11 +109,11 @@ module.exports.api = async (event) => {
   const method = event.requestContext?.http?.method || 'GET';
   const stage = event.requestContext?.stage || '$default';
 
-  // Stage-aware path normalization: remove "/<stage>" only if stage is not $default
-  const cleanPath =
-    stage && stage !== '$default'
-      ? rawPath.replace(new RegExp(`^/${stage}(?=/|$)`), '')
-      : rawPath;
+  // Always strip the stage prefix if it matches the current stage name
+  let cleanPath = rawPath;
+  if (stage && stage !== '$default') {
+    cleanPath = rawPath.replace(new RegExp(`^/${stage}(?=/|$)`), '');
+  }
 
   // Preflight CORS
   if (method === 'OPTIONS') {
@@ -154,17 +150,14 @@ module.exports.api = async (event) => {
   );
 
   try {
-    // Try exact and param-based matching
     for (const r of compiledRoutes) {
       if (r.method !== method) continue;
       const match = r.regex.exec(cleanPath);
       if (!match) continue;
 
-      // Extract path params
       const pathParams = {};
       r.keys.forEach((k, i) => (pathParams[k] = match[i + 1]));
 
-      // Invoke handler
       const result = await r.handler({
         event,
         method,
@@ -176,17 +169,16 @@ module.exports.api = async (event) => {
         jsonResponse,
       });
 
-      // Ensure JSON shape
       if (!result || typeof result !== 'object' || !('statusCode' in result)) {
         return jsonResponse(500, { success: false, error: 'Handler returned invalid response' });
       }
       return result;
     }
 
-    // No route matched
     return jsonResponse(404, { success: false, error: 'Not Found', path: cleanPath });
   } catch (err) {
     console.error('Unhandled error:', err);
     return jsonResponse(500, { success: false, error: 'Internal Server Error' });
   }
 };
+
