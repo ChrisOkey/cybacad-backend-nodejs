@@ -1,3 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Create directories
+mkdir -p routes
+
+# Create server.js
+cat > server.js <<'EOF'
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -190,3 +198,72 @@ module.exports.api = async (event) => {
     return jsonResponse(500, { success: false, error: 'Internal Server Error' });
   }
 };
+EOF
+
+# Create routes/hello.js
+cat > routes/hello.js <<'EOF'
+module.exports = {
+  'GET:/hello': async ({ jsonResponse }) => {
+    return jsonResponse(200, {
+      success: true,
+      message: 'Hello from the CybAcad backend!',
+      timestamp: new Date().toISOString(),
+    });
+  },
+};
+EOF
+
+# Create routes/labs.js
+cat > routes/labs.js <<'EOF'
+module.exports = {
+  // Create a lab (JSON body)
+  'POST:/labs': async ({ body, jsonResponse }) => {
+    // Placeholder: validate shape minimally
+    if (!body || typeof body !== 'object' || !body.name) {
+      return jsonResponse(400, { success: false, error: 'Missing required field: name' });
+    }
+    // TODO: insert into database (e.g., Firestore) and return created resource
+    return jsonResponse(201, {
+      success: true,
+      message: 'Lab created successfully (placeholder)',
+      lab: {
+        id: 'lab_demo_id',
+        name: body.name,
+        createdAt: new Date().toISOString(),
+      },
+    });
+  },
+
+  // List labs (supports query params like ?status=active&page=1)
+  'GET:/labs': async ({ query, jsonResponse }) => {
+    // TODO: fetch from database with filters from query
+    return jsonResponse(200, {
+      success: true,
+      labs: [
+        { id: 'lab_1', name: 'Intro Lab', status: 'active' },
+        { id: 'lab_2', name: 'Advanced Lab', status: 'draft' },
+      ],
+      query,
+    });
+  },
+
+  // Get lab by id using path param: /labs/{id}
+  'GET:/labs/{id}': async ({ params, jsonResponse }) => {
+    const { id } = params;
+    // TODO: fetch from database
+    return jsonResponse(200, {
+      success: true,
+      lab: { id, name: `Lab ${id}`, status: 'active' },
+    });
+  },
+};
+EOF
+
+echo "Project files created."
+echo "Next:"
+echo "  1) Deploy with SAM as you already do (Handler: server.api)."
+echo "  2) Test endpoints like:"
+echo "     GET  https://<api-id>.execute-api.<region>.amazonaws.com/hello"
+echo "     GET  https://<api-id>.execute-api.<region>.amazonaws.com/labs"
+echo "     GET  https://<api-id>.execute-api.<region>.amazonaws.com/labs/123"
+echo "     POST https://<api-id>.execute-api.<region>.amazonaws.com/labs  -d '{\"name\":\"NetSec 101\"}' -H 'Content-Type: application/json'"
