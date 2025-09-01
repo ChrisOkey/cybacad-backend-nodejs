@@ -1,45 +1,50 @@
 'use strict';
 
 /**
- * The main handler for API Gateway.
- * This function acts as a router, directing incoming requests
- * to the correct handler function based on the request path.
+ * Main Lambda handler for API Gateway HTTP API.
+ * Works with ANY /{proxy+} route and $default stage.
  *
- * @param {object} event - The incoming API Gateway event object.
- * @returns {object} The response object with statusCode, headers, and body.
+ * @param {object} event - The API Gateway event object.
+ * @returns {object} - HTTP response.
  */
 module.exports.api = async (event) => {
-  // Use event.rawPath for a consistent path in httpApi integrations.
-  const path = event.rawPath;
+  // rawPath contains the full path after the domain (including stage name if present)
+  const path = event.rawPath || '';
+  console.log('Incoming request path:', path);
 
-  // Check the path of the incoming request
-  if (path === '/default/hello') {
+  // Route: /hello (works regardless of stage name)
+  if (path.endsWith('/hello')) {
     return module.exports.helloHandler(event);
   }
-  
-  // If the path doesn't match any known endpoints, return a 404 Not Found error.
+
+  // Default: return 404 for unknown routes
   return {
     statusCode: 404,
-    body: JSON.stringify({ message: "Not Found" }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: 'Not Found' }),
   };
 };
 
 /**
- * The "hello world" endpoint handler
- * This function returns a simple JSON response to confirm the backend is working.
+ * "Hello" endpoint handler.
+ * Returns a simple JSON message with a timestamp.
  *
- * @param {object} event - The incoming API Gateway event object.
- * @returns {object} The response object for the client.
+ * @param {object} event - The API Gateway event object.
+ * @returns {object} - HTTP response.
  */
 module.exports.helloHandler = async (event) => {
   return {
     statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(
       {
         message: 'Hello from the CybAcad backend!',
         timestamp: new Date().toISOString(),
+        path: event.rawPath
       },
-      null, 2
+      null,
+      2
     ),
   };
 };
+
