@@ -13,11 +13,3 @@ Resources:
           Properties:
             Path: /{proxy+}
             Method: ANY
-
-  # This is the new resource to automatically deploy the API
-  CybAcadApiDeployment:
-    Type: 'AWS::ApiGateway::Deployment'
-    DependsOn: CybAcadApiFunction
-    Properties:
-      RestApiId: !Ref ServerlessHttpApi
-      StageName: dev
