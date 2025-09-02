@@ -1,42 +1,56 @@
+const db = require('../firestore');
+
 module.exports = {
-  // Create a lab (JSON body)
   'POST:/labs': async ({ body, jsonResponse }) => {
-    // Placeholder: validate shape minimally
-    if (!body || typeof body !== 'object' || !body.name) {
-      return jsonResponse(400, { success: false, error: 'Missing required field: name' });
-    }
-    // TODO: insert into database (e.g., Firestore) and return created resource
-    return jsonResponse(201, {
-      success: true,
-      message: 'Lab created successfully (placeholder)',
-      lab: {
-        id: 'lab_demo_id',
+    try {
+      if (!body || typeof body !== 'object' || !body.name) {
+        return jsonResponse(400, { success: false, error: 'Missing required field: name' });
+      }
+
+      const newLab = {
         name: body.name,
+        status: body.status || 'active',
         createdAt: new Date().toISOString(),
-      },
-    });
+      };
+
+      const docRef = await db.collection('labs').add(newLab);
+
+      return jsonResponse(201, {
+        success: true,
+        message: 'Lab created successfully',
+        lab: { id: docRef.id, ...newLab },
+      });
+    } catch (err) {
+      console.error('Error creating lab:', err);
+      return jsonResponse(500, { success: false, error: 'Failed to create lab' });
+    }
   },
 
-  // List labs (supports query params like ?status=active&page=1)
   'GET:/labs': async ({ query, jsonResponse }) => {
-    // TODO: fetch from database with filters from query
-    return jsonResponse(200, {
-      success: true,
-      labs: [
-        { id: 'lab_1', name: 'Intro Lab', status: 'active' },
-        { id: 'lab_2', name: 'Advanced Lab', status: 'draft' },
-      ],
-      query,
-    });
+    try {
+      let labsRef = db.collection('labs');
+      if (query.status) {
+        labsRef = labsRef.where('status', '==', query.status);
+      }
+      const snapshot = await labsRef.get();
+      const labs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return jsonResponse(200, { success: true, labs });
+    } catch (err) {
+      console.error('Error listing labs:', err);
+      return jsonResponse(500, { success: false, error: 'Failed to fetch labs' });
+    }
   },
 
-  // Get lab by id using path param: /labs/{id}
   'GET:/labs/{id}': async ({ params, jsonResponse }) => {
-    const { id } = params;
-    // TODO: fetch from database
-    return jsonResponse(200, {
-      success: true,
-      lab: { id, name: `Lab ${id}`, status: 'active' },
-    });
+    try {
+      const doc = await db.collection('labs').doc(params.id).get();
+      if (!doc.exists) {
+        return jsonResponse(404, { success: false, error: 'Lab not found' });
+      }
+      return jsonResponse(200, { success: true, lab: { id: doc.id, ...doc.data() } });
+    } catch (err) {
+      console.error('Error fetching lab:', err);
+      return jsonResponse(500, { success: false, error: 'Failed to fetch lab' });
+    }
   },
 };
