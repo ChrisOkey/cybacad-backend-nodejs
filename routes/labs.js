@@ -1,7 +1,7 @@
 const db = require('../firestore');
 
 module.exports = {
-  // Create a new lab
+  // CREATE
   'POST:/labs': async ({ body, jsonResponse }) => {
     console.log('➡️ POST /labs handler started');
     console.log('📦 Incoming body:', body);
@@ -34,7 +34,7 @@ module.exports = {
     }
   },
 
-  // List labs
+  // READ ALL
   'GET:/labs': async ({ query, jsonResponse }) => {
     console.log('➡️ GET /labs handler started');
     console.log('🔍 Query params:', query);
@@ -58,15 +58,13 @@ module.exports = {
     }
   },
 
-  // Get a single lab by ID
+  // READ ONE
   'GET:/labs/{id}': async ({ params, jsonResponse }) => {
     console.log('➡️ GET /labs/{id} handler started');
     console.log('🔍 Requested lab ID:', params.id);
 
     try {
-      console.log(`📥 Fetching lab with ID: ${params.id} from Firestore...`);
       const doc = await db.collection('labs').doc(params.id).get();
-
       if (!doc.exists) {
         console.warn(`⚠️ Lab with ID ${params.id} not found`);
         return jsonResponse(404, { success: false, error: 'Lab not found' });
@@ -77,6 +75,59 @@ module.exports = {
     } catch (err) {
       console.error(`❌ Error fetching lab with ID ${params.id}:`, err);
       return jsonResponse(500, { success: false, error: 'Failed to fetch lab' });
+    }
+  },
+
+  // UPDATE
+  'PATCH:/labs/{id}': async ({ params, body, jsonResponse }) => {
+    console.log('➡️ PATCH /labs/{id} handler started');
+    console.log('🔍 Requested lab ID:', params.id);
+    console.log('📦 Incoming update body:', body);
+
+    try {
+      if (!body || typeof body !== 'object') {
+        console.warn('⚠️ Invalid update body');
+        return jsonResponse(400, { success: false, error: 'Invalid update body' });
+      }
+
+      const docRef = db.collection('labs').doc(params.id);
+      const doc = await docRef.get();
+      if (!doc.exists) {
+        console.warn(`⚠️ Lab with ID ${params.id} not found`);
+        return jsonResponse(404, { success: false, error: 'Lab not found' });
+      }
+
+      await docRef.update(body);
+      console.log(`✅ Lab with ID ${params.id} updated successfully`);
+
+      const updatedDoc = await docRef.get();
+      return jsonResponse(200, { success: true, lab: { id: updatedDoc.id, ...updatedDoc.data() } });
+    } catch (err) {
+      console.error(`❌ Error updating lab with ID ${params.id}:`, err);
+      return jsonResponse(500, { success: false, error: 'Failed to update lab' });
+    }
+  },
+
+  // DELETE
+  'DELETE:/labs/{id}': async ({ params, jsonResponse }) => {
+    console.log('➡️ DELETE /labs/{id} handler started');
+    console.log('🔍 Requested lab ID:', params.id);
+
+    try {
+      const docRef = db.collection('labs').doc(params.id);
+      const doc = await docRef.get();
+      if (!doc.exists) {
+        console.warn(`⚠️ Lab with ID ${params.id} not found`);
+        return jsonResponse(404, { success: false, error: 'Lab not found' });
+      }
+
+      await docRef.delete();
+      console.log(`✅ Lab with ID ${params.id} deleted successfully`);
+
+      return jsonResponse(200, { success: true, message: 'Lab deleted successfully' });
+    } catch (err) {
+      console.error(`❌ Error deleting lab with ID ${params.id}:`, err);
+      return jsonResponse(500, { success: false, error: 'Failed to delete lab' });
     }
   },
 };
